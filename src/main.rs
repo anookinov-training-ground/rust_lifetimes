@@ -3,8 +3,74 @@ struct ImportantExcerpt<'a> {
     part: &'a str,
 }
 
+// lifetime elision rules - lifetime annotation patterns programmed into Rust's analysis of references
+// 3 lifetime rules
+// 1) each parameter that is a reference gets its own lifetime parameter
+// i.e. fn first_word(s: &str) -> &str {}
+// i.e. fn first_word<'a>(s: &'a str) -> &str {}
+// i.e. fn longest(x: &str, y: &str) -> &str {}
+// i.e. fn longest<'a, 'b>(x: &'a str, y: &'b str) -> &str {}
+// 2) if there is exactly one input lifetime parameter, that lifetime is assigned to all output lifetime parameters
+// i.e. fn first_word<'a>(s: &'a str) -> &'a str {}
+// 3) if there are multiple input lifetime parameters, but one of them is &self or &mut self (method), the lifetime of self is assigned to all output lifetime parameters
+fn first_word_pre<'a>(s: &'a str) -> &'a str {
+    let bytes = s.as_bytes();
+    for (i, &item) in bytes.iter().enumerate() {
+        if item == b' ' {
+            return &s[0..i];
+        }
+    }
+
+    &s[..]
+}
+
+fn first_word(s: &str) -> &str {
+    let bytes = s.as_bytes();
+    for (i, &item) in bytes.iter().enumerate() {
+        if item == b' ' {
+            return &s[0..i];
+        }
+    }
+
+    &s[..]
+}
+
+impl<'a> ImportantExcerpt<'a> {
+    fn level(&self) -> i32 {
+        3
+    }
+
+    fn annouce_and_return_part(&self, annoucement: &str) -> &str {
+        println!("Attention please: {}", annoucement);
+        self.part
+    }
+}
+
+// generic type parameters, trait bounds, and lifetimes together
+use std::fmt::Display;
+
+fn longest_with_an_annoucement<'a, T>(
+    x: &'a str,
+    y: &'a str,
+    ann: T,
+) -> &'a str
+where
+    T: Display,
+{
+    println!("Annoucement! {}", ann);
+    if x.len() > y.len() {
+        x
+    } else {
+        y
+    }
+}
+
 fn main() {
     {
+        // static lifetime
+        let s: &'static str = "I have a static lifetime.";
+        println!("{}", s);
+
         let novel = String::from("Call me Ishmael. Some years ago...");
         let first_sentence = novel.split('.').next().expect("Could not find a '.'");
         let i = ImportantExcerpt {
